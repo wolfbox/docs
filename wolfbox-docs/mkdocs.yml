@@ -1,0 +1,20 @@
+site_name: Wolf Box Documentation
+pages:
+- [index.md, Introduction]
+- [installation.md, Installation]
+- [admin/index.md, Administration]
+- [admin/software.md, Administration, Software Management]
+- [admin/datetime.md, Administration, Date & Time]
+- [admin/users.md, Administration, User Management]
+- [admin/service.md, Administration, Service Management]
+- [admin/scheduling.md, Administration, Scheduling Events]
+- [security/index.md, Security]
+- [security/grsecurity.md, Security, Kernel Protections]
+- [security/firewall.md, Security, Firewall]
+- [security/tips.md, Security, Tips]
+- [tutorials/index.md, Tutorials]
+- [tutorials/ssh.md, Tutorials, Setting up SSH]
+- [tutorials/node.md, Tutorials, Hosting a Node.js Application]
+- [troubleshooting/index.md, Troubleshooting]
+copyright: Copyright &copy; 2014, <a href="http://foxquill.com/">Andrew Aldridge</a>.
+theme: "simplex"
