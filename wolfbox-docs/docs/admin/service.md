@@ -8,12 +8,43 @@ The Wolf approach to managing services, as with other design decisions, is simpl
 robust, and flexible. While straightforward Unix-style shell scripts drive the
 boot process, Wolf incorporates modern ideas to streamline the system.
 
-In particular, Wolf uses an [Upstart](http://upstart.ubuntu.com/)-inspired
-event-triggering system where services start upon system events, or other services
+In particular, Wolf uses an [Upstart](http://upstart.ubuntu.com)-inspired
+event-triggering system where services start upon system events and other services
 starting.
 
 For instance, if a service requires network access, it makes sense to start it
-when the boot scripts signal the `networking` event.
+when the boot scripts signal the `networking` event; or if your web application
+requires [MongoDB](http://mongodb.org), then you might start it on the
+`start_mongodb` event.
+
+initstatus
+----------
+
+`initstatus` is a helper script for both showing the state of services, and
+enabling/disabling service event handlers.
+
+### Listing Services
+
+    $ sudo initstatus
+
+The output of `initstatus` is only sure to be correct when run as root. For
+security reasons, non-administrators are not permitted to view the processes of
+other users. This will prohibit some service files from knowing their state unless
+run as root.
+
+### Enabling a Service
+
+    $ sudo initstatus --enable <service>[.<event>]
+
+If you fail to specify an event, then all events for the given service will
+be enabled.
+
+### Disabling a Service
+
+    $ sudo initstatus --disable <service>[.<event>]
+
+If you fail to specify an event, then all events for the given service will
+be disabled.
 
 Service Reference
 -----------------
@@ -23,6 +54,8 @@ Service Reference
 Service files live in `/etc/rc.d`, and are executable scripts taking one command
 argument, typically accepting at least `start`, `stop`, `status`, and `help`.
 Each possible command calls a function in the service file.
+
+Service names must contain only letters, numbers, and dashes.
 
 The following skeleton is common:
 
@@ -38,6 +71,7 @@ The following skeleton is common:
     }
 
     service_status() {
+        # Must return 0 if the service is running, 2 if it is not, and 1 on error
         # ...
     }
 
@@ -67,6 +101,29 @@ It provides the following functions:
 The `daemon` command is a helper to run daemons and manage PID-files, and that can
 respawn a crashed service.
 
+### PID File Helper
+
+Because most services share many common features, a higher-level helper is provided:
+
+    #!/usr/bin/sh
+    . /etc/rc.d/rc.pidfile
+
+    run <command>
+
+    command_dispatch "${1}"
+
+This will automatically s
+
+The features may be used, but only `run` is required:
+
+* `run <command>`
+* `respawn`
+* `user <username>`
+* `pre_start()`
+* `post_start()`
+* `pre_stop()`
+* `post_stop()`
+
 ### Events
 
 The Wolf init system provides a simple means of dispatching events to automatically
@@ -75,15 +132,15 @@ start services and run tasks. This works by placing executable scripts in
 
     [name].[event_[target]]
 
+All events are added to the system log for inspection.
+
 Common events are:
 
-* `filesystem`: The root filesystem is available.
+* `filesystem`: All filesystems listed in `/etc/fstab` are available.
 * `networking`: The network is ready.
 * `system_ready`: All system initialization is complete.
 * `start_[service]`: `service` has started.
 * `stop_[service]`: `service` has stopped.
-* `ctrl-alt-del`: The user has pressed the Ctrl-Alt-Del key sequence, and the system
-  will be rebooting.
 
 ### Disabling Services and Event Handlers
 
@@ -94,6 +151,10 @@ For example, to prevent the system message bus from starting automatically,
 you can run the following command:
 
     $ sudo touch /etc/rc.d/events/dbus.filesystem.disable
+
+This is equivalent to:
+
+    $ sudo initstatus --disable dbus.filesystem
 
 ### Local Initialization Script
 
